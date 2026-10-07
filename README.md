@@ -26,27 +26,6 @@ Funcionalidades
 - Game Over
 - Reinício da partida
 
-Controles
- W  = Mover para cima
- A  = Mover para esquerda 
- S  = Mover para baixo 
- D  = Mover para direita 
-
- Clique esquerdo = Atirar 
-| 1 | Pistola
-| 2 | Rifle 
-| 3 | Shotgun 
-| R | Reiniciar após Game Over 
-
-Armas
-Pistola
-Arma equilibrada para combate geral.
-
-Rifle
-Possui maior velocidade de disparo e projéteis mais rápidos.
-
-Shotgun
-Dispara vários projéteis simultaneamente com espalhamento.
 
 Inimigos
 
