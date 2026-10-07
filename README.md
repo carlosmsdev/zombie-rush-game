@@ -1,6 +1,7 @@
 Zombie Rush
 
 Estou começando a programar esse jogo para praticar e aprender mais sobre programação !
+
 Zombie Rush é um jogo 2D de sobrevivência que estou começando a desenvolver com **Phaser**, **TypeScript** e **Vite**.
 
 O objetivo é sobreviver ao maior número possível de ondas de zumbis, utilizando diferentes armas
