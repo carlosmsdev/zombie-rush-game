@@ -1,12 +1,22 @@
 import Phaser from "phaser";
 
+import type { WeaponType } from "./Weapon";
+
 export class Bullet extends Phaser.GameObjects.Rectangle {
   speed: number;
 
+  directionX: number;
+  directionY: number;
+
   damage: number;
 
-  velocityX: number;
-  velocityY: number;
+  isCritical: boolean;
+
+  weaponType: WeaponType;
+
+  distanceTraveled: number = 0;
+
+  maxDistance: number = 1200;
 
   constructor(
     scene: Phaser.Scene,
@@ -15,29 +25,42 @@ export class Bullet extends Phaser.GameObjects.Rectangle {
     angle: number,
     speed: number,
     damage: number,
+    isCritical: boolean,
+    weaponType: WeaponType,
   ) {
-    super(scene, x, y, 14, 4, 0xffff00);
+    super(scene, x, y, 14, 5, isCritical ? 0xffff00 : 0xffdd55);
 
     scene.add.existing(this);
 
     this.speed = speed;
+
     this.damage = damage;
+
+    this.isCritical = isCritical;
+
+    this.weaponType = weaponType;
+
+    this.directionX = Math.cos(angle);
+
+    this.directionY = Math.sin(angle);
 
     this.rotation = angle;
 
-    this.velocityX = Math.cos(angle) * this.speed;
-
-    this.velocityY = Math.sin(angle) * this.speed;
+    this.setDepth(15);
   }
 
   update(delta: number) {
     const deltaSeconds = delta / 1000;
 
-    this.x += this.velocityX * deltaSeconds;
+    const distance = this.speed * deltaSeconds;
 
-    this.y += this.velocityY * deltaSeconds;
+    this.x += this.directionX * distance;
 
-    if (this.x < -100 || this.x > 1100 || this.y < -100 || this.y > 700) {
+    this.y += this.directionY * distance;
+
+    this.distanceTraveled += distance;
+
+    if (this.distanceTraveled >= this.maxDistance) {
       this.destroy();
     }
   }
