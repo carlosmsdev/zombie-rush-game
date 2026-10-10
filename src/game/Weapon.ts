@@ -1,20 +1,20 @@
 export type WeaponType = "pistol" | "rifle" | "shotgun";
 
-export interface WeaponConfig {
+export interface Weapon {
   name: string;
   damage: number;
-  bulletSpeed: number;
   fireRate: number;
+  bulletSpeed: number;
   bulletsPerShot: number;
   spread: number;
 }
 
-export const WEAPONS: Record<WeaponType, WeaponConfig> = {
+export const WEAPONS: Record<WeaponType, Weapon> = {
   pistol: {
     name: "Pistola",
     damage: 25,
-    bulletSpeed: 700,
-    fireRate: 350,
+    fireRate: 300,
+    bulletSpeed: 800,
     bulletsPerShot: 1,
     spread: 0,
   },
@@ -22,18 +22,18 @@ export const WEAPONS: Record<WeaponType, WeaponConfig> = {
   rifle: {
     name: "Rifle",
     damage: 15,
-    bulletSpeed: 850,
-    fireRate: 120,
+    fireRate: 110,
+    bulletSpeed: 1000,
     bulletsPerShot: 1,
-    spread: 0,
+    spread: 0.03,
   },
 
   shotgun: {
     name: "Shotgun",
     damage: 20,
-    bulletSpeed: 650,
     fireRate: 650,
+    bulletSpeed: 720,
     bulletsPerShot: 5,
-    spread: 0.22,
+    spread: 0.25,
   },
 };

@@ -8,6 +8,10 @@ export class Player extends Phaser.GameObjects.Rectangle {
   health: number = 100;
   maxHealth: number = 100;
 
+  healthLimitMultiplier: number = 1;
+
+  movementMultiplier: number = 1;
+
   level: number = 1;
 
   xp: number = 0;
@@ -81,9 +85,11 @@ export class Player extends Phaser.GameObjects.Rectangle {
     if (direction.length() > 0) {
       direction.normalize();
 
-      this.x += direction.x * this.speed * deltaSeconds;
+      const currentSpeed = this.speed * this.movementMultiplier;
 
-      this.y += direction.y * this.speed * deltaSeconds;
+      this.x += direction.x * currentSpeed * deltaSeconds;
+
+      this.y += direction.y * currentSpeed * deltaSeconds;
     }
 
     this.x = Phaser.Math.Clamp(this.x, 25, WORLD_WIDTH - 25);
@@ -100,6 +106,24 @@ export class Player extends Phaser.GameObjects.Rectangle {
     );
   }
 
+  setMovementMultiplier(multiplier: number) {
+    this.movementMultiplier = Math.max(0.3, multiplier);
+  }
+
+  setHealthLimitMultiplier(multiplier: number) {
+    this.healthLimitMultiplier = Phaser.Math.Clamp(multiplier, 0.5, 1);
+
+    const effectiveMaxHealth = this.getEffectiveMaxHealth();
+
+    if (this.health > effectiveMaxHealth) {
+      this.health = effectiveMaxHealth;
+    }
+  }
+
+  getEffectiveMaxHealth() {
+    return Math.max(1, Math.floor(this.maxHealth * this.healthLimitMultiplier));
+  }
+
   takeDamage(amount: number) {
     this.health -= amount;
 
@@ -109,10 +133,12 @@ export class Player extends Phaser.GameObjects.Rectangle {
   }
 
   heal(amount: number) {
+    const effectiveMaxHealth = this.getEffectiveMaxHealth();
+
     this.health += amount;
 
-    if (this.health > this.maxHealth) {
-      this.health = this.maxHealth;
+    if (this.health > effectiveMaxHealth) {
+      this.health = effectiveMaxHealth;
     }
   }
 
