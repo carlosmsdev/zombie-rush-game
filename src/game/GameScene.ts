@@ -1,31 +1,57 @@
 import Phaser from "phaser";
 
 import { Player } from "./Player";
+
 import { Bullet } from "./Bullet";
+
 import { Zombie } from "./Zombie";
+
 import type { ZombieType } from "./Zombie";
+
 import { Predator } from "./Predator";
+
 import { EnemyProjectile } from "./EnemyProjectile";
+
 import type { WeaponType } from "./Weapon";
+
 import { UPGRADES } from "./Upgrade";
+
 import { HealthPickup } from "./HealthPickup";
+
 import { XpGem } from "./pickups/XpGem";
 
 import { SurvivalManager } from "./systems/SurvivalManager";
+
 import { WeaponProgression } from "./systems/WeaponProgression";
+
 import { ThreatSystem } from "./systems/ThreatSystem";
+
 import { InfectionSystem } from "./systems/InfectionSystem";
+
 import { MutationSystem } from "./systems/MutationSystem";
+
 import { ExtractionSystem } from "./systems/ExtractionSystem";
+
 import { EventSystem } from "./systems/EventSystem";
+
 import { SoundSystem } from "./systems/SoundSystem";
+
+import { AudioSystem } from "./systems/AudioSystem";
+
 import { ScentSystem } from "./systems/ScentSystem";
+
 import { WeatherSystem } from "./systems/WeatherSystem";
+
 import { AdaptiveVirusSystem } from "./systems/AdaptiveVirusSystem";
+
 import { BiomassSystem } from "./systems/BiomassSystem";
+
 import type { BiomassPatch } from "./systems/BiomassSystem";
+
 import { LegacyRunSystem } from "./systems/LegacyRunSystem";
+
 import { MutationEvolutionSystem } from "./systems/MutationEvolutionSystem";
+
 import type {
   MutationTrait,
   MutationTraitId,
@@ -34,16 +60,20 @@ import type {
 import { World, WORLD_WIDTH, WORLD_HEIGHT } from "./world/World";
 
 import { Decoration } from "./world/Decoration";
+
 import { SpawnManager } from "./world/SpawnManager";
 
 interface LevelUpChoice {
   name: string;
+
   description: string;
+
   apply: () => void;
 }
 
 interface NestVisual {
   circle: Phaser.GameObjects.Arc;
+
   label: Phaser.GameObjects.Text;
 }
 
@@ -51,50 +81,83 @@ export class GameScene extends Phaser.Scene {
   player!: Player;
 
   world!: World;
+
   decoration!: Decoration;
+
   spawnManager!: SpawnManager;
 
   survivalManager!: SurvivalManager;
+
   weaponProgression!: WeaponProgression;
+
   threatSystem!: ThreatSystem;
+
   infectionSystem!: InfectionSystem;
+
   mutationSystem!: MutationSystem;
+
   extractionSystem!: ExtractionSystem;
+
   eventSystem!: EventSystem;
+
   soundSystem!: SoundSystem;
+
+  audioSystem!: AudioSystem;
+
   scentSystem!: ScentSystem;
+
   weatherSystem!: WeatherSystem;
+
   adaptiveVirusSystem!: AdaptiveVirusSystem;
+
   biomassSystem!: BiomassSystem;
+
   legacyRunSystem!: LegacyRunSystem;
+
   mutationEvolutionSystem!: MutationEvolutionSystem;
 
   bullets: Bullet[] = [];
+
   zombies: Zombie[] = [];
+
   enemyProjectiles: EnemyProjectile[] = [];
+
   healthPickups: HealthPickup[] = [];
+
   xpGems: XpGem[] = [];
 
   score = 0;
+
   highScore = 0;
+
   wave = 1;
 
   nextZombieSpawn = 0;
+
   zombieSpawnDelay = 1200;
+
   nextShotTime = 0;
+
   nextAcidRainTime = 0;
+
   nextFootstepSoundTime = 0;
+
   nextScentTime = 0;
 
   currentWeapon: WeaponType = "pistol";
 
   gameOver = false;
+
   choosingUpgrade = false;
+
   choosingExtraction = false;
+
   choosingMutationEvolution = false;
 
   lastDamageTime = 0;
+
   damageCooldown = 800;
+
   lastScreenShakeTime = 0;
 
   boss: Zombie | null = null;
@@ -159,7 +222,9 @@ export class GameScene extends Phaser.Scene {
 
   weaponKeys!: {
     one: Phaser.Input.Keyboard.Key;
+
     two: Phaser.Input.Keyboard.Key;
+
     three: Phaser.Input.Keyboard.Key;
   };
 
@@ -191,6 +256,10 @@ export class GameScene extends Phaser.Scene {
     super("GameScene");
   }
 
+  preload() {
+    AudioSystem.preload(this);
+  }
+
   create() {
     this.resetValues();
 
@@ -220,6 +289,8 @@ export class GameScene extends Phaser.Scene {
 
     this.soundSystem = new SoundSystem();
 
+    this.audioSystem = new AudioSystem(this);
+
     this.scentSystem = new ScentSystem();
 
     this.weatherSystem = new WeatherSystem();
@@ -243,33 +314,51 @@ export class GameScene extends Phaser.Scene {
     this.createInterface();
 
     this.createControls();
+
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.audioSystem.destroy();
+    });
   }
 
   resetValues() {
     this.bullets = [];
+
     this.zombies = [];
+
     this.enemyProjectiles = [];
+
     this.healthPickups = [];
+
     this.xpGems = [];
 
     this.score = 0;
+
     this.wave = 1;
 
     this.nextZombieSpawn = 0;
+
     this.zombieSpawnDelay = 1200;
+
     this.nextShotTime = 0;
+
     this.nextAcidRainTime = 0;
+
     this.nextFootstepSoundTime = 0;
+
     this.nextScentTime = 0;
 
     this.currentWeapon = "pistol";
 
     this.gameOver = false;
+
     this.choosingUpgrade = false;
+
     this.choosingExtraction = false;
+
     this.choosingMutationEvolution = false;
 
     this.lastDamageTime = 0;
+
     this.lastScreenShakeTime = 0;
 
     this.boss = null;
@@ -277,6 +366,7 @@ export class GameScene extends Phaser.Scene {
     this.spawnedBossMilestones = [];
 
     this.predator = null;
+
     this.predatorSpawned = false;
 
     this.extractionPosition = new Phaser.Math.Vector2(0, 0);
@@ -328,6 +418,7 @@ export class GameScene extends Phaser.Scene {
     this.scoreText = this.add
       .text(20, 20, "Score: 0", {
         fontSize: "19px",
+
         color: "#ffffff",
       })
       .setScrollFactor(0)
@@ -336,6 +427,7 @@ export class GameScene extends Phaser.Scene {
     this.healthText = this.add
       .text(20, 48, "HP: 100 / 100", {
         fontSize: "16px",
+
         color: "#ffffff",
       })
       .setScrollFactor(0)
@@ -348,6 +440,7 @@ export class GameScene extends Phaser.Scene {
     this.weaponText = this.add
       .text(20, 105, "Arma: Pistola Lv.1", {
         fontSize: "16px",
+
         color: "#ffffff",
       })
       .setScrollFactor(0)
@@ -356,6 +449,7 @@ export class GameScene extends Phaser.Scene {
     this.levelText = this.add
       .text(20, 132, "Level: 1", {
         fontSize: "16px",
+
         color: "#ffffff",
       })
       .setScrollFactor(0)
@@ -364,6 +458,7 @@ export class GameScene extends Phaser.Scene {
     this.xpText = this.add
       .text(20, 158, "XP: 0 / 100", {
         fontSize: "14px",
+
         color: "#aaaaaa",
       })
       .setScrollFactor(0)
@@ -376,7 +471,9 @@ export class GameScene extends Phaser.Scene {
     this.add
       .text(500, 22, "ZOMBIE RUSH", {
         fontSize: "26px",
+
         color: "#ffffff",
+
         fontStyle: "bold",
       })
       .setOrigin(0.5)
@@ -386,7 +483,9 @@ export class GameScene extends Phaser.Scene {
     this.timerText = this.add
       .text(500, 58, "00:00", {
         fontSize: "24px",
+
         color: "#ffffff",
+
         fontStyle: "bold",
       })
       .setOrigin(0.5)
@@ -396,7 +495,9 @@ export class GameScene extends Phaser.Scene {
     this.eventText = this.add
       .text(500, 90, "", {
         fontSize: "16px",
+
         color: "#ffdd66",
+
         fontStyle: "bold",
       })
       .setOrigin(0.5)
@@ -406,6 +507,7 @@ export class GameScene extends Phaser.Scene {
     this.waveText = this.add
       .text(805, 20, "Ameaça: 1", {
         fontSize: "18px",
+
         color: "#ff7777",
       })
       .setScrollFactor(0)
@@ -414,6 +516,7 @@ export class GameScene extends Phaser.Scene {
     this.highScoreText = this.add
       .text(805, 47, `Recorde: ${this.highScore}`, {
         fontSize: "15px",
+
         color: "#ffffff",
       })
       .setScrollFactor(0)
@@ -422,7 +525,9 @@ export class GameScene extends Phaser.Scene {
     this.threatText = this.add
       .text(805, 82, "BARULHO: 0%", {
         fontSize: "14px",
+
         color: "#ffaa44",
+
         fontStyle: "bold",
       })
       .setScrollFactor(0)
@@ -435,7 +540,9 @@ export class GameScene extends Phaser.Scene {
     this.infectionText = this.add
       .text(805, 128, "INFECÇÃO: 0%", {
         fontSize: "14px",
+
         color: "#88ff66",
+
         fontStyle: "bold",
       })
       .setScrollFactor(0)
@@ -448,7 +555,9 @@ export class GameScene extends Phaser.Scene {
     this.mutationText = this.add
       .text(805, 177, "", {
         fontSize: "14px",
+
         color: "#cc77ff",
+
         fontStyle: "bold",
       })
       .setScrollFactor(0)
@@ -457,6 +566,7 @@ export class GameScene extends Phaser.Scene {
     this.virusText = this.add
       .text(805, 212, "VÍRUS: analisando...", {
         fontSize: "13px",
+
         color: "#ff6688",
       })
       .setScrollFactor(0)
@@ -465,6 +575,7 @@ export class GameScene extends Phaser.Scene {
     this.biomassText = this.add
       .text(805, 238, "", {
         fontSize: "13px",
+
         color: "#9cff66",
       })
       .setScrollFactor(0)
@@ -473,6 +584,7 @@ export class GameScene extends Phaser.Scene {
     this.weatherText = this.add
       .text(805, 264, "TEMPO LIMPO", {
         fontSize: "13px",
+
         color: "#88ccff",
       })
       .setScrollFactor(0)
@@ -481,7 +593,9 @@ export class GameScene extends Phaser.Scene {
     this.bossNameText = this.add
       .text(500, 500, "", {
         fontSize: "17px",
+
         color: "#ff5577",
+
         fontStyle: "bold",
       })
       .setOrigin(0.5)
@@ -494,21 +608,19 @@ export class GameScene extends Phaser.Scene {
     this.bossHealthBar.setScrollFactor(0).setDepth(700).setVisible(false);
 
     this.add
-      .text(
-        500,
-        572,
-        "WASD • Mouse • 1/2/3 Armas • F Mutação • E Queimar biomassa",
-        {
-          fontSize: "14px",
-          color: "#888888",
-        },
-      )
+      .text(500, 572, "WASD • Mouse • 1/2/3 Armas • F Mutação • E Biomassa", {
+        fontSize: "14px",
+
+        color: "#888888",
+      })
       .setOrigin(0.5)
       .setScrollFactor(0)
       .setDepth(500);
 
     this.updateHealthBar();
+
     this.updateXpBar();
+
     this.updateSystemHud();
   }
 
@@ -752,7 +864,9 @@ export class GameScene extends Phaser.Scene {
 
     this.tweens.add({
       targets: blood,
+
       alpha: 0,
+
       duration: 7000,
 
       onComplete: () => {
@@ -771,6 +885,8 @@ export class GameScene extends Phaser.Scene {
     if (!activated) {
       return;
     }
+
+    this.audioSystem.playMutation();
 
     this.player.setFillStyle(0xaa44ff);
 
@@ -798,6 +914,8 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
+    this.audioSystem.setWeather(weather.type);
+
     this.showCenterMessage(weather.name, "#88ccff", 1800);
   }
 
@@ -824,6 +942,8 @@ export class GameScene extends Phaser.Scene {
 
     this.zombies.push(predator);
 
+    this.audioSystem.playStalkerAppear(predator.x, predator.y);
+
     this.showCenterMessage("ALGO ESTÁ TE CAÇANDO...", "#ff3355", 2200);
 
     this.soundSystem.addSound(predator.x, predator.y, 700, 1.5, 3000);
@@ -839,6 +959,8 @@ export class GameScene extends Phaser.Scene {
     if (!adaptedTo) {
       return;
     }
+
+    this.audioSystem.playStalkerReturn(this.predator.x, this.predator.y);
 
     let weaponName = "ARMA";
 
@@ -869,6 +991,8 @@ export class GameScene extends Phaser.Scene {
     }
 
     zombie.markAlerted(time);
+
+    this.audioSystem.playZombieAlert(zombie.x, zombie.y);
 
     const alertRadius = 650;
 
@@ -932,6 +1056,8 @@ export class GameScene extends Phaser.Scene {
 
   handleRushState() {
     if (this.threatSystem.consumeRushStarted()) {
+      this.audioSystem.playRushStart();
+
       this.startRushVisual();
 
       this.showCenterMessage("⚠ RUSH", "#ff3344", 1800);
@@ -1023,7 +1149,9 @@ export class GameScene extends Phaser.Scene {
     const title = this.add
       .text(500, 215, "VÍRUS ADAPTADO", {
         fontSize: "35px",
+
         color: "#ff4f72",
+
         fontStyle: "bold",
       })
       .setOrigin(0.5)
@@ -1033,7 +1161,9 @@ export class GameScene extends Phaser.Scene {
     const name = this.add
       .text(500, 260, adaptation.name, {
         fontSize: "22px",
+
         color: "#ffffff",
+
         fontStyle: "bold",
       })
       .setOrigin(0.5)
@@ -1043,7 +1173,9 @@ export class GameScene extends Phaser.Scene {
     const description = this.add
       .text(500, 300, adaptation.description, {
         fontSize: "16px",
+
         color: "#dddddd",
+
         align: "center",
 
         wordWrap: {
@@ -1058,12 +1190,16 @@ export class GameScene extends Phaser.Scene {
       targets: [title, name, description],
 
       alpha: 0,
+
       delay: 2500,
+
       duration: 900,
 
       onComplete: () => {
         title.destroy();
+
         name.destroy();
+
         description.destroy();
       },
     });
@@ -1111,6 +1247,8 @@ export class GameScene extends Phaser.Scene {
       WORLD_HEIGHT - 60,
     );
 
+    this.audioSystem.playSupply(x, y);
+
     this.supplyDrop = this.add
       .rectangle(x, y, 42, 42, 0xffcc33)
       .setStrokeStyle(4, 0xffffff)
@@ -1119,7 +1257,9 @@ export class GameScene extends Phaser.Scene {
     this.supplyDropLabel = this.add
       .text(x, y - 38, "SUPPLY", {
         fontSize: "14px",
+
         color: "#ffdd55",
+
         fontStyle: "bold",
       })
       .setOrigin(0.5)
@@ -1167,7 +1307,9 @@ export class GameScene extends Phaser.Scene {
     const leveledUp = this.player.gainXp(75);
 
     this.updateHealthBar();
+
     this.updateXpBar();
+
     this.updateSystemHud();
 
     this.showCenterMessage("SUPPLY COLETADO", "#ffdd55");
@@ -1199,7 +1341,9 @@ export class GameScene extends Phaser.Scene {
 
     this.tweens.add({
       targets: marker,
+
       scale: 1.25,
+
       duration: 650,
 
       onComplete: () => {
@@ -1232,7 +1376,9 @@ export class GameScene extends Phaser.Scene {
 
         this.tweens.add({
           targets: marker,
+
           alpha: 0,
+
           duration: 700,
 
           onComplete: () => {
@@ -1247,7 +1393,9 @@ export class GameScene extends Phaser.Scene {
     const title = this.add
       .text(500, 235, name, {
         fontSize: "38px",
+
         color: "#ffdd55",
+
         fontStyle: "bold",
       })
       .setOrigin(0.5)
@@ -1257,6 +1405,7 @@ export class GameScene extends Phaser.Scene {
     const subtitle = this.add
       .text(500, 285, description, {
         fontSize: "18px",
+
         color: "#ffffff",
       })
       .setOrigin(0.5)
@@ -1267,11 +1416,14 @@ export class GameScene extends Phaser.Scene {
       targets: [title, subtitle],
 
       alpha: 0,
+
       delay: 1800,
+
       duration: 800,
 
       onComplete: () => {
         title.destroy();
+
         subtitle.destroy();
       },
     });
@@ -1318,7 +1470,9 @@ export class GameScene extends Phaser.Scene {
     const label = this.add
       .text(patch.x, patch.y - 65, "NINHO", {
         fontSize: "15px",
+
         color: "#aaff77",
+
         fontStyle: "bold",
       })
       .setOrigin(0.5)
@@ -1338,6 +1492,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     visual.circle.destroy();
+
     visual.label.destroy();
 
     this.nestVisuals.delete(id);
@@ -1386,6 +1541,8 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
+    this.audioSystem.playBiomassBurn(patch.x, patch.y);
+
     this.removeNestVisual(patch.id);
 
     const blastRadius = Math.min(260, 130 + patch.amount * 8);
@@ -1415,6 +1572,8 @@ export class GameScene extends Phaser.Scene {
       const killed = zombie.takeDamage(burnDamage);
 
       if (killed) {
+        this.audioSystem.playZombieDeath(zombieX, zombieY);
+
         this.createDeathEffect(zombieX, zombieY);
       }
     }
@@ -1431,7 +1590,9 @@ export class GameScene extends Phaser.Scene {
       targets: fire,
 
       scale: 1.8,
+
       alpha: 0,
+
       duration: 900,
 
       onComplete: () => {
@@ -1539,14 +1700,22 @@ export class GameScene extends Phaser.Scene {
 
     this.nextShotTime = time + fireRate;
 
+    this.audioSystem.playWeapon(
+      this.currentWeapon,
+      this.weaponProgression.isEvolved(this.currentWeapon),
+    );
+
     this.threatSystem.addNoise(this.getCurrentWeaponNoise());
 
     this.soundSystem.addSound(
       this.player.x,
       this.player.y,
+
       this.getCurrentWeaponSoundRadius() *
         this.weatherSystem.getSoundMultiplier(),
+
       this.getCurrentWeaponNoise() / 4,
+
       1800,
     );
 
@@ -1589,6 +1758,7 @@ export class GameScene extends Phaser.Scene {
 
       const criticalChance = Math.min(
         0.9,
+
         this.player.criticalChance +
           this.infectionSystem.getCriticalChanceBonus() +
           this.mutationEvolutionSystem.getCriticalChanceBonus(),
@@ -1682,6 +1852,8 @@ export class GameScene extends Phaser.Scene {
             const killed = feralTarget.takeDamage(28);
 
             if (killed) {
+              this.audioSystem.playZombieDeath(x, y);
+
               this.createDeathEffect(x, y);
 
               this.biomassSystem.addDeath(x, y, 1);
@@ -1885,6 +2057,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   spitterAttack(zombie: Zombie) {
+    this.audioSystem.playSpitter(zombie.x, zombie.y);
+
     const angle = Phaser.Math.Angle.Between(
       zombie.x,
       zombie.y,
@@ -1947,7 +2121,9 @@ export class GameScene extends Phaser.Scene {
 
       this.tweens.add({
         targets: acid,
+
         alpha: 0,
+
         duration: 1800,
 
         onComplete: () => {
@@ -1972,14 +2148,19 @@ export class GameScene extends Phaser.Scene {
 
     const damage = zombie.damage;
 
+    this.audioSystem.playExploder(x, y);
+
     zombie.destroy();
 
     const explosion = this.add.circle(x, y, 45, 0x77ff44, 0.35).setDepth(30);
 
     this.tweens.add({
       targets: explosion,
+
       scale: 2.2,
+
       alpha: 0,
+
       duration: 350,
 
       onComplete: () => {
@@ -1994,8 +2175,11 @@ export class GameScene extends Phaser.Scene {
     this.soundSystem.addSound(
       x,
       y,
+
       780 * this.weatherSystem.getSoundMultiplier(),
+
       2.1,
+
       2400,
     );
 
@@ -2086,14 +2270,15 @@ export class GameScene extends Phaser.Scene {
           killed = zombie.takeDamage(finalDamage);
         }
 
-        this.showDamageNumber(
-          zombie.x,
-          zombie.y,
-          actualDamage,
-          bullet.isCritical,
-        );
+        if (killed) {
+          this.audioSystem.playZombieDeath(dropX, dropY);
+        } else {
+          this.audioSystem.playZombieHit(dropX, dropY);
+        }
 
-        this.createBloodEffect(zombie.x, zombie.y, bullet.isCritical ? 8 : 5);
+        this.showDamageNumber(dropX, dropY, actualDamage, bullet.isCritical);
+
+        this.createBloodEffect(dropX, dropY, bullet.isCritical ? 8 : 5);
 
         let knockback = 18;
 
@@ -2105,7 +2290,9 @@ export class GameScene extends Phaser.Scene {
 
         knockback *= this.mutationEvolutionSystem.getKnockbackMultiplier();
 
-        zombie.applyKnockback(bullet.x, bullet.y, knockback);
+        if (zombie.active) {
+          zombie.applyKnockback(bullet.x, bullet.y, knockback);
+        }
 
         bullet.destroy();
 
@@ -2120,6 +2307,8 @@ export class GameScene extends Phaser.Scene {
         }
 
         if (predatorRetreated) {
+          this.audioSystem.playStalkerFlee(dropX, dropY);
+
           this.showCenterMessage("O STALKER ESTÁ FUGINDO...", "#ffff55", 1600);
         }
 
@@ -2317,6 +2506,7 @@ export class GameScene extends Phaser.Scene {
     boss.damage = stats.damage;
 
     boss.points = 750;
+
     boss.xpReward = 350;
 
     boss.baseColor = 0x3f9cff;
@@ -2348,14 +2538,18 @@ export class GameScene extends Phaser.Scene {
     }
 
     let bullets = 3;
+
     let spread = 0.18;
+
     let speed = 300;
+
     let damage = boss.damage * 0.35;
 
     if (boss.legacyWeapon === "rifle") {
       bullets = boss.legacyEvolvedWeapon ? 9 : 6;
 
       spread = 0.24;
+
       speed = 370;
 
       damage = boss.damage * 0.2;
@@ -2365,6 +2559,7 @@ export class GameScene extends Phaser.Scene {
       bullets = boss.legacyEvolvedWeapon ? 11 : 7;
 
       spread = 0.85;
+
       speed = 285;
 
       damage = boss.damage * 0.27;
@@ -2374,6 +2569,7 @@ export class GameScene extends Phaser.Scene {
       bullets = boss.legacyEvolvedWeapon ? 4 : 2;
 
       spread = 0.12;
+
       speed = 340;
 
       damage = boss.damage * 0.45;
@@ -2463,7 +2659,11 @@ export class GameScene extends Phaser.Scene {
 
     this.bossHealthBar.fillRect(300, 525, 400, 16);
 
-    const percentage = Math.max(0, this.boss.health / this.boss.maxHealth);
+    const percentage = Math.max(
+      0,
+
+      this.boss.health / this.boss.maxHealth,
+    );
 
     this.bossHealthBar.fillStyle(this.boss.isLegacyBoss ? 0x3f9cff : 0xff2244);
 
@@ -2499,10 +2699,14 @@ export class GameScene extends Phaser.Scene {
   }
 
   showBossWarning(bossName: string) {
+    this.audioSystem.playBossWarning();
+
     const warning = this.add
       .text(500, 225, "BOSS INCOMING", {
         fontSize: "42px",
+
         color: "#ff3355",
+
         fontStyle: "bold",
       })
       .setOrigin(0.5)
@@ -2512,8 +2716,11 @@ export class GameScene extends Phaser.Scene {
     const name = this.add
       .text(500, 285, bossName, {
         fontSize: "23px",
+
         color: "#ffffff",
+
         fontStyle: "bold",
+
         align: "center",
       })
       .setOrigin(0.5)
@@ -2526,11 +2733,14 @@ export class GameScene extends Phaser.Scene {
       targets: [warning, name],
 
       alpha: 0,
+
       delay: 1800,
+
       duration: 900,
 
       onComplete: () => {
         warning.destroy();
+
         name.destroy();
       },
     });
@@ -2628,7 +2838,9 @@ export class GameScene extends Phaser.Scene {
     const title = this.add
       .text(500, 130, "EVACUAÇÃO DISPONÍVEL", {
         fontSize: "38px",
+
         color: "#00ff88",
+
         fontStyle: "bold",
       })
       .setOrigin(0.5)
@@ -2638,6 +2850,7 @@ export class GameScene extends Phaser.Scene {
     const reward = this.add
       .text(500, 185, `Recompensa x${offer.rewardMultiplier}`, {
         fontSize: "23px",
+
         color: "#ffff66",
       })
       .setOrigin(0.5)
@@ -2647,6 +2860,7 @@ export class GameScene extends Phaser.Scene {
     const description = this.add
       .text(500, 225, "Você pode sair agora ou arriscar continuar.", {
         fontSize: "17px",
+
         color: "#cccccc",
       })
       .setOrigin(0.5)
@@ -2665,7 +2879,9 @@ export class GameScene extends Phaser.Scene {
     const extractText = this.add
       .text(500, 315, "IR PARA EXTRAÇÃO", {
         fontSize: "20px",
+
         color: "#ffffff",
+
         fontStyle: "bold",
       })
       .setOrigin(0.5)
@@ -2684,7 +2900,9 @@ export class GameScene extends Phaser.Scene {
     const continueText = this.add
       .text(500, 405, "CONTINUAR A RUN", {
         fontSize: "20px",
+
         color: "#ffffff",
+
         fontStyle: "bold",
       })
       .setOrigin(0.5)
@@ -2760,7 +2978,9 @@ export class GameScene extends Phaser.Scene {
     this.extractionLabel = this.add
       .text(x, y - 120, "EXTRAÇÃO", {
         fontSize: "20px",
+
         color: "#00ff88",
+
         fontStyle: "bold",
       })
       .setOrigin(0.5)
@@ -2769,7 +2989,9 @@ export class GameScene extends Phaser.Scene {
     this.extractionArrow = this.add
       .text(500, 125, "➤", {
         fontSize: "38px",
+
         color: "#00ff88",
+
         fontStyle: "bold",
       })
       .setOrigin(0.5)
@@ -2779,6 +3001,7 @@ export class GameScene extends Phaser.Scene {
     this.extractionDistanceText = this.add
       .text(500, 155, "", {
         fontSize: "14px",
+
         color: "#00ff88",
       })
       .setOrigin(0.5)
@@ -2788,7 +3011,9 @@ export class GameScene extends Phaser.Scene {
     this.extractionProgressText = this.add
       .text(500, 185, "", {
         fontSize: "18px",
+
         color: "#ffffff",
+
         fontStyle: "bold",
       })
       .setOrigin(0.5)
@@ -2839,8 +3064,11 @@ export class GameScene extends Phaser.Scene {
   spawnXpGem(x: number, y: number, xp: number) {
     const gem = new XpGem(
       this,
+
       x + Phaser.Math.Between(-10, 10),
+
       y + Phaser.Math.Between(-10, 10),
+
       xp,
     );
 
@@ -2858,6 +3086,8 @@ export class GameScene extends Phaser.Scene {
       if (xp <= 0) {
         continue;
       }
+
+      this.audioSystem.playXp();
 
       const leveledUp = this.player.gainXp(xp);
 
@@ -2924,7 +3154,9 @@ export class GameScene extends Phaser.Scene {
     const title = this.add
       .text(500, 95, "SEU CORPO ESTÁ MUDANDO", {
         fontSize: "34px",
+
         color: "#d477ff",
+
         fontStyle: "bold",
       })
       .setOrigin(0.5)
@@ -2934,6 +3166,7 @@ export class GameScene extends Phaser.Scene {
     const subtitle = this.add
       .text(500, 142, "Escolha uma mutação permanente para esta run", {
         fontSize: "17px",
+
         color: "#ffffff",
       })
       .setOrigin(0.5)
@@ -2942,64 +3175,74 @@ export class GameScene extends Phaser.Scene {
 
     const objects: Phaser.GameObjects.GameObject[] = [overlay, title, subtitle];
 
-    choices.forEach((trait: MutationTrait, index: number) => {
-      const y = 235 + index * 115;
+    choices.forEach(
+      (
+        trait: MutationTrait,
 
-      const button = this.add
-        .rectangle(500, y, 590, 92, 0x291333)
-        .setStrokeStyle(2, 0xb455dd)
-        .setInteractive({
-          useHandCursor: true,
-        })
-        .setScrollFactor(0)
-        .setDepth(2501);
+        index: number,
+      ) => {
+        const y = 235 + index * 115;
 
-      const name = this.add
-        .text(500, y - 18, trait.name, {
-          fontSize: "20px",
-          color: "#e6a1ff",
-          fontStyle: "bold",
-        })
-        .setOrigin(0.5)
-        .setScrollFactor(0)
-        .setDepth(2502);
+        const button = this.add
+          .rectangle(500, y, 590, 92, 0x291333)
+          .setStrokeStyle(2, 0xb455dd)
+          .setInteractive({
+            useHandCursor: true,
+          })
+          .setScrollFactor(0)
+          .setDepth(2501);
 
-      const description = this.add
-        .text(500, y + 18, trait.description, {
-          fontSize: "14px",
-          color: "#dddddd",
-          align: "center",
+        const name = this.add
+          .text(500, y - 18, trait.name, {
+            fontSize: "20px",
 
-          wordWrap: {
-            width: 520,
-          },
-        })
-        .setOrigin(0.5)
-        .setScrollFactor(0)
-        .setDepth(2502);
+            color: "#e6a1ff",
 
-      objects.push(button, name, description);
+            fontStyle: "bold",
+          })
+          .setOrigin(0.5)
+          .setScrollFactor(0)
+          .setDepth(2502);
 
-      button.on("pointerdown", () => {
-        const selected = this.mutationEvolutionSystem.selectTrait(trait.id);
+        const description = this.add
+          .text(500, y + 18, trait.description, {
+            fontSize: "14px",
 
-        if (!selected) {
-          return;
-        }
+            color: "#dddddd",
 
-        this.applyMutationTraitImmediateEffects(trait.id);
+            align: "center",
 
-        for (const object of objects) {
-          object.destroy();
-        }
+            wordWrap: {
+              width: 520,
+            },
+          })
+          .setOrigin(0.5)
+          .setScrollFactor(0)
+          .setDepth(2502);
 
-        this.choosingMutationEvolution = false;
+        objects.push(button, name, description);
 
-        this.showCenterMessage(trait.name, "#d477ff", 1600);
+        button.on("pointerdown", () => {
+          const selected = this.mutationEvolutionSystem.selectTrait(trait.id);
 
-        this.updateSystemHud();
-      });
-    });
+          if (!selected) {
+            return;
+          }
+
+          this.applyMutationTraitImmediateEffects(trait.id);
+
+          for (const object of objects) {
+            object.destroy();
+          }
+
+          this.choosingMutationEvolution = false;
+
+          this.showCenterMessage(trait.name, "#d477ff", 1600);
+
+          this.updateSystemHud();
+        });
+      },
+    );
   }
 
   applyMutationTraitImmediateEffects(id: MutationTraitId) {
@@ -3018,6 +3261,8 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.choosingUpgrade = true;
+
+    this.audioSystem.playLevelUp();
 
     const playerChoices: LevelUpChoice[] = UPGRADES.map((upgrade) => ({
       name: upgrade.name,
@@ -3050,6 +3295,8 @@ export class GameScene extends Phaser.Scene {
 
         apply: () => {
           this.weaponProgression.upgrade(weaponType);
+
+          this.audioSystem.playWeaponUpgrade();
         },
       });
     }
@@ -3068,7 +3315,9 @@ export class GameScene extends Phaser.Scene {
     const title = this.add
       .text(500, 105, `LEVEL ${this.player.level}!`, {
         fontSize: "40px",
+
         color: "#ffff00",
+
         fontStyle: "bold",
       })
       .setOrigin(0.5)
@@ -3078,6 +3327,7 @@ export class GameScene extends Phaser.Scene {
     const subtitle = this.add
       .text(500, 150, "Escolha uma melhoria", {
         fontSize: "19px",
+
         color: "#ffffff",
       })
       .setOrigin(0.5)
@@ -3101,7 +3351,9 @@ export class GameScene extends Phaser.Scene {
       const name = this.add
         .text(500, y - 14, choice.name, {
           fontSize: "21px",
+
           color: "#ffffff",
+
           fontStyle: "bold",
         })
         .setOrigin(0.5)
@@ -3111,6 +3363,7 @@ export class GameScene extends Phaser.Scene {
       const description = this.add
         .text(500, y + 17, choice.description, {
           fontSize: "14px",
+
           color: "#aaaaaa",
         })
         .setOrigin(0.5)
@@ -3183,7 +3436,9 @@ export class GameScene extends Phaser.Scene {
     this.threatBar.fillRect(
       805,
       105,
+
       165 * this.threatSystem.getNoisePercentage(),
+
       12,
     );
 
@@ -3216,7 +3471,9 @@ export class GameScene extends Phaser.Scene {
     this.infectionBar.fillRect(
       805,
       151,
+
       165 * this.infectionSystem.getPercentage(),
+
       12,
     );
 
@@ -3270,13 +3527,20 @@ export class GameScene extends Phaser.Scene {
     const value = Math.round(damage);
 
     const text = this.add
-      .text(x, y - 25, critical ? `${value}!` : `${value}`, {
-        fontSize: critical ? "22px" : "16px",
+      .text(
+        x,
+        y - 25,
 
-        color: critical ? "#ffff00" : "#ffffff",
+        critical ? `${value}!` : `${value}`,
 
-        fontStyle: critical ? "bold" : "normal",
-      })
+        {
+          fontSize: critical ? "22px" : "16px",
+
+          color: critical ? "#ffff00" : "#ffffff",
+
+          fontStyle: critical ? "bold" : "normal",
+        },
+      )
       .setOrigin(0.5)
       .setDepth(60);
 
@@ -3298,7 +3562,14 @@ export class GameScene extends Phaser.Scene {
   createBloodEffect(x: number, y: number, amount: number) {
     for (let i = 0; i < amount; i++) {
       const blood = this.add
-        .circle(x, y, Phaser.Math.Between(2, 5), 0x9b111e)
+        .circle(
+          x,
+          y,
+
+          Phaser.Math.Between(2, 5),
+
+          0x9b111e,
+        )
         .setDepth(9);
 
       const angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
@@ -3328,8 +3599,11 @@ export class GameScene extends Phaser.Scene {
       .ellipse(
         x,
         y,
+
         Phaser.Math.Between(20, 35),
+
         Phaser.Math.Between(12, 24),
+
         0x520707,
         0.35,
       )
@@ -3353,7 +3627,9 @@ export class GameScene extends Phaser.Scene {
     const text = this.add
       .text(x, y, message, {
         fontSize: "20px",
+
         color,
+
         fontStyle: "bold",
       })
       .setOrigin(0.5)
@@ -3374,12 +3650,21 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  showCenterMessage(message: string, color: string, duration: number = 1100) {
+  showCenterMessage(
+    message: string,
+
+    color: string,
+
+    duration: number = 1100,
+  ) {
     const text = this.add
       .text(500, 270, message, {
         fontSize: "30px",
+
         color,
+
         fontStyle: "bold",
+
         align: "center",
       })
       .setOrigin(0.5)
@@ -3444,7 +3729,14 @@ export class GameScene extends Phaser.Scene {
 
     this.healthBar.fillStyle(color);
 
-    this.healthBar.fillRect(20, 74, 200 * percentage, 17);
+    this.healthBar.fillRect(
+      20,
+      74,
+
+      200 * percentage,
+
+      17,
+    );
   }
 
   updateXpBar() {
@@ -3462,7 +3754,14 @@ export class GameScene extends Phaser.Scene {
 
     this.xpBar.fillStyle(0x00aaff);
 
-    this.xpBar.fillRect(20, 181, 200 * percentage, 12);
+    this.xpBar.fillRect(
+      20,
+      181,
+
+      200 * percentage,
+
+      12,
+    );
   }
 
   cleanObjects() {
@@ -3520,6 +3819,10 @@ export class GameScene extends Phaser.Scene {
 
     this.gameOver = true;
 
+    this.audioSystem.stopWeather();
+
+    this.audioSystem.playGameOver();
+
     this.saveCurrentRunAsLegacy();
 
     this.saveHighScore();
@@ -3533,6 +3836,10 @@ export class GameScene extends Phaser.Scene {
     }
 
     this.gameOver = true;
+
+    this.audioSystem.stopWeather();
+
+    this.audioSystem.playExtraction();
 
     this.saveCurrentRunAsLegacy();
 
@@ -3548,6 +3855,10 @@ export class GameScene extends Phaser.Scene {
 
     this.gameOver = true;
 
+    this.audioSystem.stopWeather();
+
+    this.audioSystem.playGameOver();
+
     this.saveCurrentRunAsLegacy();
 
     this.saveHighScore();
@@ -3555,7 +3866,11 @@ export class GameScene extends Phaser.Scene {
     this.showEndScreen("GAME OVER", "#ff3333");
   }
 
-  showEndScreen(title: string, color: string) {
+  showEndScreen(
+    title: string,
+
+    color: string,
+  ) {
     this.add
       .rectangle(500, 300, 1000, 600, 0x000000, 0.9)
       .setScrollFactor(0)
@@ -3564,7 +3879,9 @@ export class GameScene extends Phaser.Scene {
     this.add
       .text(500, 85, title, {
         fontSize: "42px",
+
         color,
+
         fontStyle: "bold",
       })
       .setOrigin(0.5)
@@ -3609,8 +3926,11 @@ export class GameScene extends Phaser.Scene {
     this.add
       .text(500, 155, stats.join("\n"), {
         fontSize: "16px",
+
         color: "#ffffff",
+
         align: "center",
+
         lineSpacing: 5,
       })
       .setOrigin(0.5, 0)
@@ -3624,6 +3944,7 @@ export class GameScene extends Phaser.Scene {
         "Sua build foi salva. Ela pode voltar infectada na próxima run.",
         {
           fontSize: "14px",
+
           color: "#7fc8ff",
         },
       )
@@ -3634,6 +3955,7 @@ export class GameScene extends Phaser.Scene {
     this.add
       .text(500, 552, "Pressione R para jogar novamente", {
         fontSize: "17px",
+
         color: "#aaaaaa",
       })
       .setOrigin(0.5)
